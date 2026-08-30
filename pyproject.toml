@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "medical-text-classifier"
+version = "0.1.0"
+description = "Tech Challenge Fase 3 - Medical Abstracts classification"
+authors = ["Cauã Filipe Graff"]
+readme = "README.md"
+packages = [{include = "app"}, {include = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.115.0"
+uvicorn = {version = "^0.30.0", extras = ["standard"]}
+scikit-learn = "^1.5.0"
+pandas = "^2.2.0"
+numpy = "^2.0.0"
+joblib = "^1.4.0"
+prometheus-client = "^0.20.0"
+pydantic = "^2.8.0"
+pydantic-settings = "^2.4.0"
+onnx = "^1.16.0"
+onnxruntime = "^1.18.0"
+skl2onnx = "^1.17.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.0"
+httpx = "^0.27.0"
+ruff = "^0.6.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
