@@ -3,10 +3,16 @@ services:
     build: .
     ports:
       - "8000:8000"
+
     environment:
       MODEL_PATH: /app/models/model.joblib
+      LABELS_PATH: /app/data/raw/medical_tc_labels.csv
+      ONNX_MODEL_PATH: /app/models/classifier.onnx
+
     volumes:
       - ./models:/app/models
+      - ./data/raw/medical_tc_labels.csv:/app/data/raw/medical_tc_labels.csv:ro
+
     depends_on:
       - prometheus
 
