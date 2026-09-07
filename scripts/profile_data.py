@@ -4,8 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.data.loader import TEXT_COLUMN, TARGET_COLUMN, iter_dataset, load_labels
-
+from src.data.loader import TEXT_COLUMN, TARGET_COLUMN, load_labels
 
 def profile(path: str, chunksize: int) -> None:
     total = 0
