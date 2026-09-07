@@ -1,33 +1,107 @@
+import os
 import time
-from fastapi import FastAPI, Response
-from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
-from app.metrics import ERROR_COUNT, REQUEST_COUNT, REQUEST_LATENCY
-from app.model_service import ModelService
-from app.schemas import PredictionRequest, PredictionResponse
 
-app = FastAPI(title="Medical Text Classifier", version="0.1.0")
-service = ModelService("models/model.joblib")
+from fastapi import FastAPI, Response
+from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    generate_latest,
+)
+
+from app.metrics import (
+    ERROR_COUNT,
+    REQUEST_COUNT,
+    REQUEST_LATENCY,
+)
+from app.model_service import ModelService
+from app.schemas import (
+    PredictionRequest,
+    PredictionResponse,
+)
+
+app = FastAPI(
+    title="Medical Text Classifier",
+    version="0.2.0",
+)
+
+service = ModelService(
+    model_path=os.getenv(
+        "MODEL_PATH",
+        "models/model.joblib",
+    ),
+    onnx_model_path=os.getenv(
+        "ONNX_MODEL_PATH",
+        "models/classifier.onnx",
+    ),
+    labels_path=os.getenv(
+        "LABELS_PATH",
+        "data/raw/medical_tc_labels.csv",
+    ),
+)
+
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "healthy"}
+    return {
+        "status": "healthy",
+        "inference_engine": "onnxruntime",
+    }
 
-@app.post("/predict", response_model=PredictionResponse)
-def predict(request: PredictionRequest) -> PredictionResponse:
+
+@app.post(
+    "/predict",
+    response_model=PredictionResponse,
+)
+def predict(
+    request: PredictionRequest,
+) -> PredictionResponse:
     started = time.perf_counter()
+
     try:
-        prediction, class_name, confidence = service.predict(request.text)
-        REQUEST_COUNT.labels("/predict", "POST", "200").inc()
-        return PredictionResponse(
-            prediction=prediction, class_name=class_name, confidence=confidence
+        (
+            prediction,
+            class_name,
+            confidence,
+        ) = service.predict(
+            request.text
         )
+
+        REQUEST_COUNT.labels(
+            "/predict",
+            "POST",
+            "200",
+        ).inc()
+
+        return PredictionResponse(
+            prediction=prediction,
+            class_name=class_name,
+            confidence=confidence,
+        )
+
     except Exception:
-        ERROR_COUNT.labels("/predict").inc()
-        REQUEST_COUNT.labels("/predict", "POST", "500").inc()
+        ERROR_COUNT.labels(
+            "/predict"
+        ).inc()
+
+        REQUEST_COUNT.labels(
+            "/predict",
+            "POST",
+            "500",
+        ).inc()
+
         raise
+
     finally:
-        REQUEST_LATENCY.labels("/predict").observe(time.perf_counter() - started)
+        REQUEST_LATENCY.labels(
+            "/predict"
+        ).observe(
+            time.perf_counter()
+            - started
+        )
+
 
 @app.get("/metrics")
 def metrics() -> Response:
-    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+    return Response(
+        generate_latest(),
+        media_type=CONTENT_TYPE_LATEST,
+    )
